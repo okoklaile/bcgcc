@@ -1,121 +1,97 @@
-# BC-GCC Project
+# BC-GCC: Behavior Cloning for Google Congestion Control
 
-Behavior Cloning for Google Congestion Control (GCC) Algorithm
+This repository contains the official implementation of the Behavior Cloning (BC) agent for Google Congestion Control (GCC) in WebRTC. The project aims to train a neural network policy to predict optimal bandwidth allocation based on expert trajectories from diverse network conditions.
 
-## Project Structure
+## 🚀 Features
+
+- **Robust Data Pipeline**: Handles diverse network traces (4G/5G, Wi-Fi, Wired) with varying delays and packet losses.
+- **Advanced Feature Engineering**: Extracts 32-dimensional state vectors including delay gradients, trends, and queue delay estimates.
+- **Stable Training**: Implements hard clipping, gradient scaling, and loss-weighted sampling to handle extreme network outliers.
+- **Efficient Implementation**: optimized for GPU training with mixed precision (AMP) and pre-calculated tensor datasets.
+
+## 📂 Project Structure
 
 ```
 bc_gcc/
-├── data/               # Raw datasets (133 pickle files, 898K samples)
-│   ├── ghent/         # 40 files - bicycle, bus, car, train scenarios
-│   ├── norway/        # 59 files - bus, ferry scenarios  
-│   ├── NY/            # 25 files - subway, bus scenarios
-│   └── opennetlab/    # 9 files - 4G/5G controlled tests
-│
-├── tools/             # Analysis and visualization tools
-│   ├── view_pickle.py         # View pickle file contents
-│   ├── analyze_gcc_data.py    # Statistical analysis
-│   ├── plot_gcc_data.py       # Visualization (requires matplotlib)
-│   ├── analyze_coverage.py    # Dataset coverage analysis
-│   └── plot_coverage.py       # Coverage visualization
-│
-├── docs/              # Documentation
-│   ├── README.md              # Detailed usage guide
-│   ├── QUICK_REFERENCE.md     # Quick reference
-│   ├── COVERAGE_REPORT.md     # Coverage analysis report
-│   └── ANALYSIS_SUMMARY.md    # Analysis summary (中文)
-│
-├── reports/           # Generated analysis reports and plots
-│   ├── coverage_analysis.png
-│   ├── loss_analysis.png
-│   └── bicycle_plot.png
-│
-├── outputs/           # Exported data (CSV, etc.)
-│   └── bicycle_0001.csv
-│
-├── quick_start.sh     # Quick start script
-└── view_analysis.sh   # View analysis results
+├── data/               # Dataset directory (see Data Preparation)
+├── src/                # Source code
+│   ├── config.py       # Configuration and hyperparameters
+│   ├── dataset.py      # Data loading and processing
+│   ├── model.py        # LSTM model architecture
+│   ├── train.py        # Training loop and validation
+│   └── prepare_data.py # Preprocessing script
+├── tools/              # Analysis and visualization tools
+├── checkpoints/        # Saved model checkpoints
+├── logs/               # TensorBoard logs
+└── requirements.txt    # Python dependencies
 ```
 
-## Quick Start
+## 🛠️ Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/bc_gcc.git
+    cd bc_gcc
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
+    *Requires Python 3.8+ and PyTorch 2.0+.*
+
+## 📊 Data Preparation
+
+The training requires a dataset of network traces in `.pickle` format.
+
+1.  **Place your data** in the `data/` directory, organized by subfolders (e.g., `data/ghent`, `data/norway`, `data/NY`, `data/opennetlab`).
+2.  **Preprocess the data** for faster training (recommended):
+    ```bash
+    python src/prepare_data.py
+    ```
+    This script converts raw pickle files into optimized PyTorch tensors (`.pt`), providing a 10-15x speedup during training.
+
+## 🏋️ Training
+
+To start training the BC model:
 
 ```bash
-# 1. Run quick start script
-./quick_start.sh
-
-# 2. Analyze a dataset
-python3 tools/analyze_gcc_data.py analyze data/ghent/rates_delay_loss_gcc_report_bicycle_0001.pickle
-
-# 3. Generate visualization
-python3 tools/plot_gcc_data.py plot data/ghent/rates_delay_loss_gcc_report_bicycle_0001.pickle reports/output.png
-
-# 4. Run coverage analysis
-cd tools && python3 analyze_coverage.py && cd ..
-
-# 5. View analysis results
-./view_analysis.sh
+python src/train.py
 ```
 
-## Dataset Overview
+### Configuration
+You can modify hyperparameters in `src/config.py`:
+- `WINDOW_SIZE`: Length of the history window (default: 10 steps / 2 seconds).
+- `BATCH_SIZE`: Training batch size (default: 2048).
+- `LEARNING_RATE`: Initial learning rate (default: 2e-4).
+- `LSTM_HIDDEN_SIZE`: Hidden dimension of the LSTM (default: 256).
 
-- **Total samples:** 897,909 data points
-- **Total files:** 133 pickle files
-- **High delay coverage:** Good (46.93% in norway, 41.60% in NY)
-- **Packet loss coverage:** ⚠️ Limited (<1% samples have loss)
-
-## Key Findings
-
-✅ **Strengths:**
-- Excellent high-delay scenarios
-- Large and diverse dataset
-- Real-world mobility scenarios
-
-❌ **Critical Gap:**
-- Packet loss scenarios severely limited
-- Requires oversampling for BC training
-
-## Training BC Model
-
-### Quick Start
-
+### Monitoring
+Monitor training progress using TensorBoard:
 ```bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Start training
-cd src
-python train.py
-
-# 3. Monitor training
-tensorboard --logdir ../logs
+tensorboard --logdir logs
 ```
 
-### Model Architecture
+## 📈 Evaluation & Analysis
 
-- **Input**: [batch, window_size=10, features=14]
-  - 6 core features (delay, loss, rate, etc.)
-  - 8 reserved features (for future RL)
-- **LSTM**: 2 layers × 128 hidden units
-- **Output**: Bandwidth prediction (bps)
-- **Parameters**: ~155K
+### 1. Statistical Analysis
+Analyze the distribution of a specific trace:
+```bash
+python tools/analyze_gcc_data.py analyze data/ghent/rates_delay_loss_gcc_report_bicycle_0001.pickle
+```
 
-### Key Features
+### 2. Visualization
+Generate plots for bandwidth, delay, and loss:
+```bash
+python tools/plot_gcc_data.py plot data/ghent/rates_delay_loss_gcc_report_bicycle_0001.pickle reports/output.png
+```
 
-✅ **Data Resampling**: Oversample packet loss scenarios 20-50x
-✅ **Sample Weighting**: 50x weight for loss>0 samples  
-✅ **Reserved Inputs**: 8 slots for future RL features
-✅ **Gradient Clipping**: Prevent LSTM gradient explosion
-✅ **Early Stopping**: Patience=10 epochs
+### 3. Coverage Analysis
+Check the coverage of delay and loss scenarios across the entire dataset:
+```bash
+cd tools && python analyze_coverage.py
+```
 
-For detailed training guide, see `README_TRAINING.md`
+## 📝 License
 
-## Next Steps
-
-1. Review analysis reports in `docs/`
-2. Check visualization in `reports/`
-3. Start BC training: `cd src && python train.py`
-4. Monitor with Tensorboard
-5. Evaluate on test set
-6. Fine-tune with RL (future work)
-
-For detailed information, see `docs/ANALYSIS_SUMMARY.md` (中文) or `docs/COVERAGE_REPORT.md` (English).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

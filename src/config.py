@@ -2,9 +2,12 @@
 Configuration for BC-GCC Training
 """
 
+from pathlib import Path
+
 class Config:
     # Dataset paths
-    DATA_DIR = '../data'
+    PROJECT_ROOT = Path(__file__).parent.parent
+    DATA_DIR = str(PROJECT_ROOT / 'data')
     DATASETS = ['ghent', 'norway', 'NY', 'opennetlab']
     
     # Data split

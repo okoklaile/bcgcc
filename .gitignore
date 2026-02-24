@@ -1,64 +1,33 @@
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
 env/
 venv/
-*.egg-info/
-.pytest_cache/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Output files
-outputs/*.csv
-!outputs/.gitkeep
-
-# Reports (except key ones)
-reports/*.png
-!reports/coverage_analysis.png
-!reports/loss_analysis.png
-
-# Training outputs
-checkpoints/
-logs/
-src/checkpoints/
-src/logs/
-models/
-outputs/
-*.pt
-*.pth
-*.ckpt
+.env
 
 # Data
-data/ghent/
-data/norway/
-data/NY/
-data/opennetlab/
-data/processed/
-!data/**/.gitkeep
+data/*
+!data/.gitkeep
+*.pickle
+*.pt
+*.csv
 
-# Keep directories
-!checkpoints/.gitkeep
-!logs/.gitkeep
-!models/.gitkeep
+# Logs and Checkpoints
+logs/
+checkpoints/
+reports/
+outputs/
+*.log
+*.tfevents.*
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Temporary files
-*.tmp
-*.log
-
-# Tensorboard
-events.out.tfevents.*
